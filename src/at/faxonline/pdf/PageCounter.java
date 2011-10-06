@@ -2,6 +2,7 @@ package at.faxonline.pdf;
 
 import java.io.FileInputStream;
 import java.io.BufferedInputStream;
+import java.io.InputStream;
 
 import java.io.IOException;
 
@@ -19,15 +20,26 @@ public class PageCounter
     public static final Pattern countExtraction  = Pattern.compile("/Count\\s(\\d+)");
 
     String path;
+    InputStream inputStream;
 
     public PageCounter(String path)
     {
         this.path = path;
     }
 
+    public PageCounter(InputStream inputStream)
+    {
+        this.inputStream = inputStream;
+    }
+
     public int getPageCount() throws IOException
     {
-        FileInputStream             inputStream         = new FileInputStream(path);
+        if (inputStream == null) {
+          // get stream from path
+          inputStream = new FileInputStream(path);
+        }
+        // else use provided input stream
+
         BufferedInputStream         bufferedInputStream = new BufferedInputStream(inputStream, 4096);
         PeekablePushbackInputStream stream = new PeekablePushbackInputStream(bufferedInputStream, 2);
 
