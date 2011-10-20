@@ -49,7 +49,7 @@ public class PageCounter
         int nextByte;
         int prevByte = 0;
 
-         while(stream.isEOF() == false && foundPageCount == false) {
+         while(!stream.isEOF() && !foundPageCount) {
             nextByte = stream.read();
 
             // This is a hack to make sure that we don't encounter "<<" in a stream, and much
