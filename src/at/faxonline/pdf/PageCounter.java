@@ -37,59 +37,63 @@ public class PageCounter
     {
         open();
 
-        int     pageCount      = 1;
-        boolean foundPageCount = false;
+        int pageCount = 1;
 
-        int nextByte;
-        int prevByte = 0;
+        try {
+            boolean foundPageCount = false;
 
-         while(!stream.isEOF() && !foundPageCount) {
-            nextByte = stream.read();
+            int nextByte;
+            int prevByte = 0;
 
-            // This is a hack to make sure that we don't encounter "<<" in a stream, and much
-            // easier than scan the whole structure for stream / endstream
-            if ((char)nextByte == '<' && stream.peekChar() == '<' && (prevByte == 10 || prevByte == 13)) {
-                //noinspection ResultOfMethodCallIgnored
-                stream.read(); // Skip the second "<"
+            while(!stream.isEOF() && !foundPageCount) {
+                nextByte = stream.read();
 
-                boolean eod = false;
-                StringBuilder stringBuilder = new StringBuilder();
+                // This is a hack to make sure that we don't encounter "<<" in a stream, and much
+                // easier than scan the whole structure for stream / endstream
+                if ((char)nextByte == '<' && stream.peekChar() == '<' && (prevByte == 10 || prevByte == 13)) {
+                    //noinspection ResultOfMethodCallIgnored
+                    stream.read(); // Skip the second "<"
 
-                while (! eod) {
-                    char nextChar = stream.readChar();
+                    boolean eod = false;
+                    StringBuilder stringBuilder = new StringBuilder();
 
-                    if(nextChar == '>' && stream.readChar() == '>') {
-                        String string = stringBuilder.toString();
+                    while (! eod) {
+                        char nextChar = stream.readChar();
 
-                        if (isPageDictionary.matcher(string).find()) {
-                            boolean hasParent = string.contains("/Parent");
-                            boolean hasKids   = string.contains("/Kids");
+                        if(nextChar == '>' && stream.readChar() == '>') {
+                            String string = stringBuilder.toString();
 
-                            if (! hasParent && hasKids && string.contains("/Count")) {
-                                Matcher matcher = countExtraction.matcher(string);
+                            if (isPageDictionary.matcher(string).find()) {
+                                boolean hasParent = string.contains("/Parent");
+                                boolean hasKids   = string.contains("/Kids");
 
-                                if(matcher.find()) {
-                                    pageCount = Integer.parseInt(matcher.group(1));
-                                    foundPageCount = true;
+                                if (! hasParent && hasKids && string.contains("/Count")) {
+                                    Matcher matcher = countExtraction.matcher(string);
+
+                                    if(matcher.find()) {
+                                        pageCount = Integer.parseInt(matcher.group(1));
+                                        foundPageCount = true;
+                                    }
                                 }
                             }
-                        }
 
-                        eod = true;
-                    } else {
-                        stringBuilder.append(nextChar);
+                            eod = true;
+                        } else {
+                            stringBuilder.append(nextChar);
+                        }
                     }
                 }
+
+                prevByte = nextByte;
             }
 
-            prevByte = nextByte;
+            if (! foundPageCount) {
+                System.err.println("Found no page count.");
+            }
+        } finally {
+            close();
         }
 
-        if (! foundPageCount) {
-            System.err.println("Found no page count.");
-        }
-
-        close();
         return pageCount;
     }
 
