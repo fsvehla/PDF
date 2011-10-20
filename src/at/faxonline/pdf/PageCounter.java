@@ -20,7 +20,9 @@ public class PageCounter
     public static final Pattern countExtraction  = Pattern.compile("/Count\\s(\\d+)");
 
     String path;
+
     InputStream inputStream;
+    private PeekablePushbackInputStream stream;
 
     public PageCounter(String path)
     {
@@ -34,14 +36,7 @@ public class PageCounter
 
     public int getPageCount() throws IOException
     {
-        if (inputStream == null) {
-          // get stream from path
-          inputStream = new FileInputStream(path);
-        }
-        // else use provided input stream
-
-        BufferedInputStream         bufferedInputStream = new BufferedInputStream(inputStream, 4096);
-        PeekablePushbackInputStream stream = new PeekablePushbackInputStream(bufferedInputStream, 2);
+        open();
 
         int     pageCount      = 1;
         boolean foundPageCount = false;
@@ -55,6 +50,7 @@ public class PageCounter
             // This is a hack to make sure that we don't encounter "<<" in a stream, and much
             // easier than scan the whole structure for stream / endstream
             if ((char)nextByte == '<' && stream.peekChar() == '<' && (prevByte == 10 || prevByte == 13)) {
+                //noinspection ResultOfMethodCallIgnored
                 stream.read(); // Skip the second "<"
 
                 boolean eod = false;
@@ -94,7 +90,23 @@ public class PageCounter
             System.err.println("Found no page count.");
         }
 
-        inputStream.close();
+        close();
         return pageCount;
+    }
+
+    private void open() throws IOException {
+        if (inputStream == null) {
+          // get stream from path
+          inputStream = new FileInputStream(path);
+        }
+        // else use provided input stream
+
+        BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream, 4096);
+        stream = new PeekablePushbackInputStream(bufferedInputStream, 2);
+    }
+
+     private void close() throws IOException {
+        stream.close();
+        inputStream.close();
     }
 }
