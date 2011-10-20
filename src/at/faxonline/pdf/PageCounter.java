@@ -16,12 +16,11 @@ import java.util.regex.Pattern;
 
 public class PageCounter
 {
-    public static final Pattern isPageDictionary = Pattern.compile("/Type\\s?/Pages");
-    public static final Pattern countExtraction  = Pattern.compile("/Count\\s(\\d+)");
+    private static final Pattern isPageDictionary = Pattern.compile("/Type\\s?/Pages");
+    private static final Pattern countExtraction  = Pattern.compile("/Count\\s(\\d+)");
 
-    String path;
-
-    InputStream inputStream;
+    private String path;
+    private InputStream inputStream;
     private PeekablePushbackInputStream stream;
 
     public PageCounter(String path)
